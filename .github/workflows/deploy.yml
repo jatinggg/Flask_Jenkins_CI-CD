@@ -55,12 +55,15 @@ jobs:
           echo "Branch: ${{ github.ref_name }}"
           if [ "${{ github.ref_name }}" = "main" ]; then
             TARGET="/var/www/html"
+            APP_ENV="production"
           else
             TARGET="/var/www/html/staging"
+            APP_ENV="staging"
           fi
           echo "Deploying to $TARGET"
           sudo mkdir -p $TARGET
           sudo rm -rf $TARGET/*
           sudo cp -r ~/flask_app_temp/* $TARGET/
+          echo "APP_ENV=$APP_ENV" | sudo tee $TARGET/.env
           sudo systemctl restart nginx
           echo "✅ Deployment complete for branch: ${{ github.ref_name }}"
