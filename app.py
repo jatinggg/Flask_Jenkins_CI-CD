@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import os
 
-# Load env vars
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -13,11 +13,15 @@ app.secret_key = os.getenv("SECRET_KEY")
 
 mongo = PyMongo(app)
 
+# Determine environment (staging or production)
+APP_ENV = os.getenv("APP_ENV", "production").lower()
+
 # Home page -> list students
 @app.route('/')
 def index():
     students = mongo.db.students.find()
-    return render_template('index.html', students=students)
+    env_label = "🟢 Student Management (Production)" if APP_ENV == "production" else "🟡 Student Management (Staging)"
+    return render_template('index.html', students=students, env_label=env_label)
 
 # Add student
 @app.route('/add', methods=['GET', 'POST'])
@@ -49,7 +53,6 @@ def update_student(student_id):
         return redirect(url_for('index'))
     return render_template('update_student.html', student=student)
 
-
 # Delete student
 @app.route('/delete/<student_id>')
 def delete_student(student_id):
@@ -57,4 +60,4 @@ def delete_student(student_id):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+    app.run(host='0.0.0.0', debug=True, port=8000)
