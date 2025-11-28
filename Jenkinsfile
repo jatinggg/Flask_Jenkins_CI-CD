@@ -133,7 +133,7 @@ pipeline {
                     <p><strong>Application URL:</strong> http://35.179.76.28:${APP_PORT}</p>
                     <p>Check console output at: ${env.BUILD_URL}</p>
                 """,
-                to: 'sheikhramiz666@gmail.com',
+                to: 'jatin.js.shrivastava@gmail.com',
                 mimeType: 'text/html'
             )
         }
@@ -156,7 +156,7 @@ pipeline {
                     <p>Check console output at: ${env.BUILD_URL}</p>
                     <p>Please review the logs and fix the issues.</p>
                 """,
-                to: 'sheikhramiz666@gmail.com',
+                to: 'jatin.js.shrivastava@gmail.com',
                 mimeType: 'text/html'
             )
         }
