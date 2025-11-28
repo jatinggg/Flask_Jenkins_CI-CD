@@ -4,7 +4,7 @@ A simple **Flask** web application to manage student records with **MongoDB** as
 
 ---
 
-## Features
+## Features1
 
 * List all students on the home page
 * Add a new student
