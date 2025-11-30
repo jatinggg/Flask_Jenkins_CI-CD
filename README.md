@@ -1,133 +1,213 @@
-# Student Registration System
+# Jenkins CI/CD Pipeline for Flask Student Management Application
 
-A simple **Flask** web application to manage student records with **MongoDB** as the backend database. Users can **add, view, update, and delete** student details.
+A complete CI/CD pipeline setup for a Flask-based student management application using Jenkins, GitHub webhooks, and automated testing.
 
----
+## Installation
 
-## Features1
+### VM Setup
 
-* List all students on the home page
-* Add a new student
-* Update existing student details
-* Delete a student with confirmation
-* Simple and responsive UI using Bootstrap
-
----
-
-## Tech Stack
-
-* **Backend:** Python, Flask
-* **Database:** MongoDB (via Flask-PyMongo)
-* **Frontend:** HTML, Jinja2 templates, Bootstrap 5
-* **Environment Variables:** Managed via `.env` file
-
----
-
-## Setup Instructions
-
-### 1. Clone the repository
+Update your VM and install required dependencies:
 
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+sudo apt update && sudo apt upgrade -y
+
+# Install Python and pip
+sudo apt install -y python3 python3-pip python3-venv
+
+# Install MongoDB
+sudo apt install -y mongodb
+
+# Start and enable MongoDB
+sudo systemctl start mongodb
+sudo systemctl enable mongodb
+
+# Verify MongoDB
+sudo systemctl status mongodb
 ```
 
-### 2. Create and activate a virtual environment
+### Jenkins Setup
+
+#### Install Java
 
 ```bash
-python -m venv venv
-# Activate venv
-# Windows:
-venv\Scripts\activate
-# Linux / Mac:
-source venv/bin/activate
+sudo apt install -y openjdk-11-jdk
+
+# Verify installation
+java -version
 ```
 
-### 3. Install dependencies
+#### Install Jenkins
 
 ```bash
-pip install -r requirements.txt
+# Add Jenkins repository
+wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+
+# Install and start Jenkins
+sudo apt update
+sudo apt install -y jenkins
+
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+# Check status
+sudo systemctl status jenkins
 ```
 
-**`requirements.txt` example:**
+#### Access Jenkins
 
-```
-Flask
-Flask-PyMongo
-python-dotenv
-bson
-```
+1. Navigate to `http://your-vm-ip:8080`
+2. Retrieve the initial admin password:
+   ```bash
+   sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
+   
+3. Complete the setup wizard and install recommended plugins
+     
 
-### 4. Configure environment variables
 
-Create a `.env` file in the project root:
+### Repository Setup
 
-```
-MONGO_URI=<your-mongodb-connection-string>
-SECRET_KEY=<your-secret-key>
-```
-
-### 5. Run the application
+Clone the repository into your VM:
 
 ```bash
-python app.py
+git clone https://github.com/jatinggg/Flask_Jenkins_CI-CD.git
+cd Jenkins_flask_Practice
 ```
 
-Open your browser at: [http://localhost:8000](http://localhost:8000)
 
----
+**Now go inside the cloned repo and create our Jenkinsfile, test file and update our requirement.txt**
+- `Jenkinsfile` - Pipeline configuration
+- `requirements.txt` - Python dependencies
+- `test_*.py` - Unit test files
 
-## Project Structure
+## Configuration
+
+### GitHub Webhooks
+
+Set up automatic build triggers when code is pushed:
+
+1. Go to your GitHub repository
+2. Click **Settings** → **Webhooks** → **Add webhook**
+3. Configure as follows:
+   - **Payload URL:** `http://your-vm-ip:8080/github-webhook/`
+   - **Content type:** `application/json`
+   - **Which events:** Select "Just the push event"
+   - **Active:** Check the box
+4. Click **Add webhook**
+
+### Email Notifications
+
+#### Configure SMTP for Extended Email Notifications
+
+1. Go to **Manage Jenkins** → **Configure System**
+2. Scroll to **Extended E-mail Notification**
+3. Set the following:
+   - **SMTP server:** `smtp.gmail.com`
+   - **SMTP Port:** `465`
+   - Check **Use SSL**
+   - Add Jenkins credentials
+4. Click **Save**
+
+#### Configure Default Email Settings
+
+1. In **Configure System**, scroll to **E-mail Notification**
+2. Set the following:
+   - **SMTP server:** `smtp.gmail.com`
+   - **User Name:** Your Gmail address
+   - **Password:** Your Google app password (not regular password)
+   - **SMTP Port:** `465`
+   - Check **Use SMTP Authentication**
+   - Check **Use SSL**
+   - **Reply-To Address:** Your Gmail address
+   
+3. Click **Test configuration** to send a test email
+4. Click **Save**
+   You will recieve the test mail on your Gmail account
+
+### Jenkins Credentials
+
+#### Add MongoDB URI Credential
+
+1. Go to **Manage Jenkins** → **Manage Credentials**
+2. Click **(global)** domain
+3. Click **Add Credentials**
+4. Configure as follows:
+   - **Kind:** Secret text
+   - **Scope:** Global
+   - **Secret:** `mongodb+srv://username:password@cluster.mongodb.net/student_db?retryWrites=true&w=majority`
+   - **ID:** `MONGO_URI`
+   - **Description:** MongoDB Connection String
+5. Click **OK**
+ 
+#### Add Flask Secret Key Credential
+
+1. Repeat the above steps with:
+   - **Kind:** Secret text
+   - **Scope:** Global
+   - **Secret:** Your random secret key
+   - **ID:** `SECRET_KEY`
+   - **Description:** Flask Secret Key
+2. Click **OK**
+ 
+
+### Pipeline Setup
+
+1. Go to Jenkins Dashboard
+2. Click **New Item**
+3. Enter name: `Flask-Student-App-Pipeline`
+4. Select **Pipeline**
+5. Click **OK**
+
+#### Configure General Settings
+
+- **Description:** CI/CD Pipeline for Flask Student Management Application
+- Check **GitHub project**
+- **Project URL:** `https://github.com/jatinggg/Flask_Jenkins_CI-CD.git`
+ 
+#### Configure Build Triggers
+
+- Check **GitHub hook trigger for GITScm polling**
+
+#### Configure Pipeline
+
+- **Definition:** Pipeline script from SCM
+- **SCM:** Git
+- **Repository URL:** `https://github.com/jatinggg/Flask_Jenkins_CI-CD.git`
+- **Credentials:** Leave as none if public repo
+- **Branch Specifier:** `*/main`
+- **Script Path:** `Jenkinsfile`
+
+Click **Save**
+
+## Usage
+
+The pipeline is automatically triggered when you push changes to the main branch:
+
+```bash
+git add .
+git commit -m "Your commit message"
+git push origin main
+```
+
+**Our build is triggered and pipeline is working successfully**
+
+
+Jenkins will:
+1. Detect the webhook trigger
+2. Clone the latest code
+3. Run unit tests
+4. Build the application
+6. Send email notifications on success or failure
+   Check your Gmail Account
+
+8. Deploy the application
+
+## Application Access
+
+Once the pipeline completes successfully, access your Flask application at:
 
 ```
-project/
-│
-├── templates/
-│   ├── base.html
-│   ├── index.html
-│   ├── add_student.html
-│   ├── update_student.html
-│
-├── app.py
-├── requirements.txt
-└── .env
+http://your-vm-ip:8000/
 ```
-
----
-
-## Screenshots
-
-**Home Page**
-Lists all students with Edit/Delete buttons.
-- <img width="1902" height="607" alt="image" src="https://github.com/user-attachments/assets/a58a6a6d-4978-4769-8074-232e4d31e69d" />
-
-
-**Add Student**
-Form to add a new student.
-- <img width="1897" height="801" alt="image" src="https://github.com/user-attachments/assets/d65d25c3-ebb5-410a-adb1-e130ad7c5878" />
-
-
-**Update Student**
-Form pre-filled with student details.
-- <img width="1905" height="897" alt="image" src="https://github.com/user-attachments/assets/04febf01-879f-431f-ab07-abcfb993acf1" />
-
-
-
----
-
-## Notes
-
-* Make sure MongoDB is running and accessible via the URI in `.env`
-* Delete action includes a confirmation page to prevent accidental deletion
-* Uses `ObjectId` from `bson` to work with MongoDB document IDs
-
----
-
-## License
-
-MIT License
-
----
-
-
 
